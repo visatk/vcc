@@ -96,7 +96,6 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
   };
 
   return (
-  return (
     <>
       <Dialog.Root open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
         <Dialog.Portal>
@@ -200,6 +199,8 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                 </div>
               )}
             </motion.div>
+            </Dialog.Content>
+              </>
             )}
           </AnimatePresence>
         </Dialog.Portal>

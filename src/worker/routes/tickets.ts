@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { zValidator } from '@hono/zod-validator';
 import { eq, desc } from 'drizzle-orm';
 import { getDb } from '../db';
-import { tickets, ticketMessages, users } from '../db/schema';
+import { tickets, ticketMessages } from '../db/schema';
 import { Env } from '../types';
 import { authMiddleware, adminMiddleware, AuthUser } from '../middleware/auth';
 
@@ -109,7 +109,7 @@ ticketsRouter.post(
       });
 
       await tx.update(tickets).set({
-        updatedAt: new Date().getTime(),
+        updatedAt: new Date(),
         status: user.role === 'admin' ? 'resolved' : 'open' // Auto-update status
       }).where(eq(tickets.id, ticketId));
     });
@@ -129,7 +129,7 @@ ticketsRouter.put(
     const { status } = c.req.valid('json');
     const db = getDb(c.env);
 
-    await db.update(tickets).set({ status, updatedAt: new Date().getTime() }).where(eq(tickets.id, ticketId));
+    await db.update(tickets).set({ status, updatedAt: new Date() }).where(eq(tickets.id, ticketId));
     return c.json({ success: true });
   }
 );

@@ -1,12 +1,11 @@
 import { Hono } from 'hono';
-import { eq, inArray, and, sql } from 'drizzle-orm';
-import { getDb } from '../db';
+import { eq, sql } from 'drizzle-orm';
 import { products, productCategories, productVariants, volumeDiscounts } from '../db/schema';
 import { Env } from '../types';
 import { z } from 'zod';
 import { zValidator } from '@hono/zod-validator';
 import { cache } from 'hono/cache';
-import { authMiddleware, adminMiddleware, AuthUser } from '../middleware/auth';
+import { authMiddleware, adminMiddleware } from '../middleware/auth';
 
 import { AppVariables } from '../types';
 
@@ -132,7 +131,7 @@ productsRouter.post('/',
   }).strict()),
   async (c) => {
     const data = c.req.valid('json');
-    const { categoryIds, variants, volumeDiscounts, ...productData } = data;
+    const { categoryIds, variants, volumeDiscounts: volumeDiscountsData, ...productData } = data;
     const db = c.get('db');
 
     const result = await db.transaction(async (tx) => {
@@ -151,8 +150,8 @@ productsRouter.post('/',
         await tx.insert(productVariants).values(varInserts);
       }
 
-      if (volumeDiscounts && volumeDiscounts.length > 0) {
-        const vdInserts = volumeDiscounts.map(vd => ({ ...vd, productId: insertedProduct.id }));
+      if (volumeDiscountsData && volumeDiscountsData.length > 0) {
+        const vdInserts = volumeDiscountsData.map(vd => ({ ...vd, productId: insertedProduct.id }));
         await tx.insert(volumeDiscounts).values(vdInserts);
       }
       return insertedProduct;
@@ -191,7 +190,7 @@ productsRouter.put('/:id',
   async (c) => {
     const id = Number(c.req.param('id'));
     const data = c.req.valid('json');
-    const { categoryIds, variants, volumeDiscounts, ...productData } = data;
+    const { categoryIds, variants, volumeDiscounts: volumeDiscountsData, ...productData } = data;
     const db = c.get('db');
 
     const result = await db.transaction(async (tx) => {
@@ -220,10 +219,10 @@ productsRouter.put('/:id',
         }
       }
 
-      if (volumeDiscounts !== undefined) {
+      if (volumeDiscountsData !== undefined) {
         await tx.delete(volumeDiscounts).where(eq(volumeDiscounts.productId, id));
-        if (volumeDiscounts.length > 0) {
-          const vdInserts = volumeDiscounts.map(vd => ({ ...vd, productId: id }));
+        if (volumeDiscountsData.length > 0) {
+          const vdInserts = volumeDiscountsData.map(vd => ({ ...vd, productId: id }));
           await tx.insert(volumeDiscounts).values(vdInserts);
         }
       }

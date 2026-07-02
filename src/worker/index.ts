@@ -20,10 +20,11 @@ import { reviewsRouter } from "./routes/reviews";
 import { cartRouter } from "./routes/cart";
 import { fraudRouter } from "./routes/fraud";
 import { analyticsRouter } from "./routes/analytics";
+import { passkeysRouter } from "./routes/passkeys";
 import { getDb } from "./db";
-import { abandonedCarts, users, orders, vouchRequests } from "./db/schema";
+import { abandonedCarts, vouchRequests } from "./db/schema";
 import { sendAbandonedCartEmail } from "./utils/email";
-import { eq, isNull, and } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 
 const app = new Hono<{ Bindings: Env; Variables: import("./types").AppVariables }>();
 
@@ -75,16 +76,16 @@ app.route("/api/reviews", reviewsRouter);
 app.route("/api/cart", cartRouter);
 app.route("/api/fraud", fraudRouter);
 app.route("/api/analytics", analyticsRouter);
+app.route("/api/passkeys", passkeysRouter);
 
 export default {
   fetch: app.fetch,
-  async scheduled(event: ScheduledEvent, env: Env, ctx: ExecutionContext) {
+  async scheduled(_event: ScheduledEvent, env: Env, ctx: ExecutionContext) {
     const db = getDb(env);
     
     // Find carts that are older than 2 hours and haven't been recovered or emailed yet
-    const twoHoursAgo = Date.now() - 2 * 60 * 60 * 1000;
-    
-    const cartsToEmail = await db.query.abandonedCarts.findMany({
+    const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
+    const cartsToRecover = await db.query.abandonedCarts.findMany({
       where: (carts, { eq, and, isNull, lt }) => and(
         eq(carts.recovered, false),
         isNull(carts.emailSentAt),
@@ -93,17 +94,16 @@ export default {
       with: { user: { columns: { email: true, name: true } } }
     });
 
-    for (const cart of cartsToEmail) {
+    for (const cart of cartsToRecover) {
       if (cart.user) {
         ctx.waitUntil(sendAbandonedCartEmail(env, cart.user.email, cart.user.name));
-        await db.update(abandonedCarts).set({ emailSentAt: Date.now() }).where(eq(abandonedCarts.id, cart.id));
+        await db.update(abandonedCarts).set({ emailSentAt: new Date() }).where(eq(abandonedCarts.id, cart.id));
       }
     }
 
     // Process Vouch Requests
-    const threeDaysAgo = Date.now() - 3 * 24 * 60 * 60 * 1000;
-    
-    const ordersToVouch = await db.query.orders.findMany({
+    const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
+    const recentOrders = await db.query.orders.findMany({
       where: (orders, { eq, and, lt }) => and(
         eq(orders.status, 'completed'),
         lt(orders.createdAt, threeDaysAgo)
@@ -111,7 +111,7 @@ export default {
       with: { user: { columns: { email: true } } }
     });
 
-    for (const order of ordersToVouch) {
+    for (const order of recentOrders) {
       const existingVouch = await db.query.vouchRequests.findFirst({
         where: (vr, { eq }) => eq(vr.orderId, order.id)
       });
@@ -128,7 +128,7 @@ export default {
       }
     }
   },
-  async email(message: any, env: Env, ctx: ExecutionContext) {
+  async email(message: any, _env: Env, _ctx: ExecutionContext) {
     // Forward or log the incoming email
     console.log(`Received email from ${message.from} to ${message.to}`);
     // Example: save to database or auto-reply

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useAuthStore, User } from "../store/authStore";
 import { api } from "../utils/api";
 import { motion } from "framer-motion";
+import { registerPasskey } from "../utils/passkeyUtils";
 
 interface Order {
   id: number;
@@ -39,6 +40,7 @@ export default function UserDashboard() {
   const [reviewProductId, setReviewProductId] = useState<number | null>(null);
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState("");
+  const [registeringPasskey, setRegisteringPasskey] = useState(false);
 
   useEffect(() => {
     // Fetch latest user profile
@@ -75,6 +77,18 @@ export default function UserDashboard() {
 
   const totalSpent = orders.filter(o => o.status === 'completed').reduce((sum, o) => sum + o.totalUsd, 0);
   const pendingCount = orders.filter(o => o.status === 'pending').length;
+
+  const handleRegisterPasskey = async () => {
+    try {
+      setRegisteringPasskey(true);
+      await registerPasskey();
+      alert("Passkey registered successfully! You can now use it to sign in.");
+    } catch (e: any) {
+      alert(e.message || "Failed to register passkey");
+    } finally {
+      setRegisteringPasskey(false);
+    }
+  };
 
   return (
     <div className="container mx-auto px-4 py-8 md:py-12 max-w-6xl">
@@ -145,6 +159,24 @@ export default function UserDashboard() {
             <div className="text-4xl font-black tracking-tighter">${totalSpent.toFixed(2)}</div>
             <p className="text-xs text-base-content/60 font-medium mt-4">Across {orders.filter(o => o.status === 'completed').length} orders</p>
           </div>
+        </motion.div>
+        
+        {/* Bento Box 4: Security (Passkeys) */}
+        <motion.div variants={itemVariants} className="col-span-1 md:col-span-4 bg-gradient-to-r from-base-200 to-base-300 rounded-box p-6 border border-white/5 glow-effect flex flex-col md:flex-row items-center justify-between gap-4">
+          <div>
+            <h3 className="font-bold text-lg mb-1 flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+              Passwordless Security
+            </h3>
+            <p className="text-sm opacity-70">Register a passkey (Face ID, Touch ID, or Windows Hello) for faster, more secure sign-ins.</p>
+          </div>
+          <button 
+            onClick={handleRegisterPasskey} 
+            disabled={registeringPasskey}
+            className="btn btn-primary rounded-full shrink-0 shadow-lg glow-effect"
+          >
+            {registeringPasskey ? <span className="loading loading-spinner"></span> : "Create Passkey"}
+          </button>
         </motion.div>
       </motion.div>
 

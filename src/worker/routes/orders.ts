@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { zValidator } from '@hono/zod-validator';
 import { eq, sql } from 'drizzle-orm';
 import { upgradeWebSocket } from 'hono/cloudflare-workers';
-import { orders, orderItems, downloads, products, users, storeCreditTransactions } from '../db/schema';
+import { orders, downloads, products, users, storeCreditTransactions } from '../db/schema';
 import { AppVariables } from '../types';
 import { authMiddleware } from '../middleware/auth';
 import { sendDownloadEmail } from '../utils/email';
@@ -172,7 +172,7 @@ ordersRouter.get(
     let interval: ReturnType<typeof setInterval>;
 
     return {
-      onOpen(event, ws) {
+      onOpen(_event: any, _ws: any) {
         interval = setInterval(async () => {
           try {
             const order = await db.query.orders.findFirst({ where: eq(orders.id, id) });

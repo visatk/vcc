@@ -1,13 +1,13 @@
 import { eq, sql } from 'drizzle-orm';
 import { getDb } from '../db';
-import { orders, orderItems, downloads, products, users, coupons, storeCreditTransactions, blacklist } from '../db/schema';
+import { orders, orderItems, downloads, products, users, coupons, storeCreditTransactions } from '../db/schema';
 import { Env } from '../types';
 import { AuthUser } from '../middleware/auth';
 
 type CheckoutItem = { productId: number; priceUsd: number; variantId?: number; quantity?: number; totalDiscountUsd?: number };
 
 export class OrderService {
-  constructor(private db: ReturnType<typeof getDb>, private env: Env) {}
+  constructor(private db: ReturnType<typeof getDb>, private _env: Env) {}
 
   async checkFraud(ip: string | undefined, email: string): Promise<string | null> {
     if (ip) {
@@ -46,7 +46,7 @@ export class OrderService {
         const min = product.minPriceUsd || 0;
         if (item.priceUsd < min) throw new Error(`${product.title} minimum price is $${min}`);
         expectedPricePerUnit = item.priceUsd;
-      } else if (product.pricingModel === 'one-time' || product.pricingModel === 'subscription') {
+      } else if (product.pricingModel === 'one-time' || product.type === 'subscription') {
         if (item.priceUsd !== expectedPricePerUnit) throw new Error(`Invalid amount for ${product.title}`);
       }
 
@@ -74,7 +74,7 @@ export class OrderService {
     
     if (couponCode) {
       const coupon = await this.db.query.coupons.findFirst({ where: eq(coupons.code, couponCode) });
-      if (!coupon || !coupon.isActive || (coupon.expiryDate && Date.now() > coupon.expiryDate) || (coupon.usageLimit && coupon.usageCount >= coupon.usageLimit)) {
+      if (!coupon || !coupon.isActive || (coupon.expiryDate && Date.now() > coupon.expiryDate.getTime()) || (coupon.usageLimit && coupon.usageCount >= coupon.usageLimit)) {
         throw new Error('Invalid, expired, or fully used coupon');
       }
       validCouponId = coupon.id;

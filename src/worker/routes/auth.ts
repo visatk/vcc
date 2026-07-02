@@ -2,7 +2,6 @@ import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
 import { Env } from '../types';
-import { drizzle } from 'drizzle-orm/d1';
 import { users } from '../db/schema';
 import { eq } from 'drizzle-orm';
 import { hashPassword, verifyPassword, generateSessionToken } from '../utils/crypto';

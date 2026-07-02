@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Turnstile } from '@marsidev/react-turnstile';
+import { authenticatePasskey, triggerConditionalCreate } from '../utils/passkeyUtils';
 
 const TURNSTILE_SITE_KEY = '1x00000000000000000000AA'; // Dummy key for testing (always passes)
 
@@ -9,6 +10,40 @@ export function LoginForm({ onLoginSuccess }: { onLoginSuccess: () => void }) {
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const abortControllerRef = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    // Attempt Conditional UI (Autofill) on mount
+    abortControllerRef.current = new AbortController();
+    authenticatePasskey(abortControllerRef.current, true)
+      .then((data) => {
+        if (data && data.token) {
+          localStorage.setItem('auth_token', data.token);
+          onLoginSuccess();
+        }
+      })
+      .catch((err) => console.log('Autofill failed or aborted:', err));
+
+    return () => {
+      if (abortControllerRef.current) abortControllerRef.current.abort();
+    };
+  }, []);
+
+  const handlePasskeyExplicit = async () => {
+    try {
+      if (abortControllerRef.current) abortControllerRef.current.abort();
+      setLoading(true);
+      const data = await authenticatePasskey(undefined, false);
+      if (data && data.token) {
+        localStorage.setItem('auth_token', data.token);
+        onLoginSuccess();
+      }
+    } catch (err: any) {
+      setError(err.message || 'Passkey login failed');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,6 +62,10 @@ export function LoginForm({ onLoginSuccess }: { onLoginSuccess: () => void }) {
       const data = await res.json();
       if (res.ok) {
         localStorage.setItem('auth_token', data.token);
+        // Post-login silent promotion for passkey creation
+        if (abortControllerRef.current) {
+          await triggerConditionalCreate(abortControllerRef.current);
+        }
         onLoginSuccess();
       } else {
         setError(data.error || 'Login failed');
@@ -58,6 +97,13 @@ export function LoginForm({ onLoginSuccess }: { onLoginSuccess: () => void }) {
 
       <button type="submit" disabled={!turnstileToken || loading} className="btn btn-primary w-full">
         {loading ? <span className="loading loading-spinner"></span> : 'Login'}
+      </button>
+
+      <div className="divider text-xs opacity-50">OR</div>
+
+      <button type="button" onClick={handlePasskeyExplicit} disabled={loading} className="btn btn-outline w-full gap-2">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+        Sign in with Passkey
       </button>
     </form>
   );

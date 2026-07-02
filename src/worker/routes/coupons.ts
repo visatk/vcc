@@ -1,5 +1,5 @@
 import { Hono } from 'hono';
-import { eq, sql } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { getDb } from '../db';
 import { coupons } from '../db/schema';
 import { Env } from '../types';
@@ -30,12 +30,16 @@ couponsRouter.post('/',
     expiryDate: z.number().optional().nullable(), // timestamp ms
   }).strict()),
   async (c) => {
-    const data = c.req.valid('json');
+    const { code, discountType, discountValue, usageLimit, expiryDate } = c.req.valid('json');
     const db = getDb(c.env);
 
     try {
       const result = await db.insert(coupons).values({
-        ...data,
+        code,
+        discountType,
+        discountValue,
+        usageLimit: usageLimit ?? null,
+        expiryDate: expiryDate ? new Date(expiryDate) : null,
         isActive: true,
         usageCount: 0
       }).returning().get();
@@ -82,7 +86,7 @@ couponsRouter.post('/validate',
       return c.json({ success: false, message: 'Coupon usage limit reached' }, 400);
     }
 
-    if (coupon.expiryDate && Date.now() > coupon.expiryDate) {
+    if (coupon.expiryDate && Date.now() > coupon.expiryDate.getTime()) {
       return c.json({ success: false, message: 'Coupon has expired' }, 400);
     }
 

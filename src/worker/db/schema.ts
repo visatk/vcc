@@ -28,6 +28,7 @@ export const usersRelations = relations(users, ({ one, many }) => ({
   reviews: many(reviews),
   abandonedCart: one(abandonedCarts),
   creditTransactions: many(storeCreditTransactions),
+  passkeys: many(passkeyCredentials),
 }));
 
 // -----------------------------
@@ -387,3 +388,29 @@ export const blacklist = sqliteTable('blacklist', {
     valueUniqueIdx: uniqueIndex('blacklist_value_idx').on(table.value)
   };
 });
+
+// -----------------------------
+// Passkey Credentials Table
+// -----------------------------
+export const passkeyCredentials = sqliteTable('passkey_credentials', {
+  id: text('id').primaryKey(), // The credential ID
+  userId: integer('user_id').references(() => users.id).notNull(),
+  publicKey: text('public_key').notNull(), // Base64url encoded
+  counter: integer('counter').notNull(),
+  deviceType: text('device_type').notNull(),
+  backedUp: integer('backed_up', { mode: 'boolean' }).notNull(),
+  transports: text('transports'), // JSON array of transports
+  createdAt: integer('created_at', { mode: 'timestamp_ms' }).default(sql`(strftime('%s', 'now') * 1000)`).notNull(),
+  lastUsedAt: integer('last_used_at', { mode: 'timestamp_ms' }).default(sql`(strftime('%s', 'now') * 1000)`).notNull(),
+}, (table) => {
+  return {
+    userIdIdx: index('passkey_user_idx').on(table.userId)
+  };
+});
+
+export const passkeyCredentialsRelations = relations(passkeyCredentials, ({ one }) => ({
+  user: one(users, {
+    fields: [passkeyCredentials.userId],
+    references: [users.id],
+  }),
+}));

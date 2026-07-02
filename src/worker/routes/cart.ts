@@ -36,7 +36,7 @@ cartRouter.post(
       if (existing) {
         await db.update(abandonedCarts).set({
           cartDataJson: JSON.stringify(items),
-          updatedAt: new Date().getTime(),
+          updatedAt: new Date(),
           recovered: false
         }).where(eq(abandonedCarts.id, existing.id));
       } else {
