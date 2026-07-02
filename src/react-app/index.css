@@ -1,0 +1,184 @@
+@import "tailwindcss";
+
+@plugin "daisyui/theme" {
+  name: "premiumDark";
+  default: true;
+  prefersdark: true;
+  color-scheme: "dark";
+  --color-base-100: oklch(11% 0.01 270);
+  --color-base-200: oklch(14% 0.01 270);
+  --color-base-300: oklch(18% 0.01 270);
+  --color-base-content: oklch(92% 0.01 270);
+  
+  --color-primary: oklch(62% 0.28 255);
+  --color-primary-content: oklch(98% 0.01 270);
+  
+  --color-secondary: oklch(72% 0.25 320);
+  --color-secondary-content: oklch(98% 0.01 270);
+  
+  --color-accent: oklch(82% 0.20 150);
+  --color-accent-content: oklch(15% 0.01 270);
+  
+  --color-neutral: oklch(22% 0.01 270);
+  --color-neutral-content: oklch(88% 0.01 270);
+  
+  --color-info: oklch(72% 0.18 230);
+  --color-success: oklch(75% 0.18 160);
+  --color-warning: oklch(82% 0.18 80);
+  --color-error: oklch(68% 0.22 25);
+  
+  --radius-selector: 0.75rem;
+  --radius-field: 0.5rem;
+  --radius-box: 1.25rem;
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+  --border: 1px;
+  --depth: 1;
+  --noise: 0;
+}
+
+@theme {
+  --font-sans: 'Inter', 'Outfit', system-ui, -apple-system, sans-serif;
+  --animate-gradient: gradient 8s linear infinite;
+  @keyframes gradient {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--color-base-100);
+  color: var(--color-base-content);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Custom Utilities */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05), 0 8px 32px -8px rgba(0, 0, 0, 0.3);
+}
+
+.gpu-accelerated {
+  transform: translateZ(0);
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+}
+
+.contain-layout {
+  contain: layout paint style;
+}
+
+.defer-render {
+  content-visibility: auto;
+  contain-intrinsic-size: 1000px;
+}
+
+.glow-effect {
+  position: relative;
+}
+
+.glow-effect::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  background: linear-gradient(45deg, var(--color-primary), var(--color-secondary), var(--color-accent));
+  z-index: -1;
+  border-radius: inherit;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.glow-effect:hover::before {
+  opacity: 0.6;
+}
+
+/* Base Modal Styling */
+#cf-zaraz-consent-modal {
+  background-color: var(--zaraz-bg) !important;
+  color: var(--zaraz-text) !important;
+  border-radius: var(--zaraz-radius) !important;
+  border: 1px solid var(--zaraz-border) !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5) !important;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial,
+    sans-serif !important;
+  max-width: 600px !important;
+}
+
+/* Modal Title */
+#cf-zaraz-consent-modal h1 {
+  color: var(--zaraz-primary) !important;
+  font-weight: 700 !important;
+  font-size: 1.5rem !important;
+  margin-bottom: 1rem !important;
+}
+
+/* Modal Text */
+#cf-zaraz-consent-modal p {
+  color: var(--zaraz-muted) !important;
+  line-height: 1.6 !important;
+  font-size: 0.95rem !important;
+}
+
+/* Buttons Container */
+.cf-zaraz-buttons-container {
+  display: flex !important;
+  gap: 12px !important;
+  margin-top: 2rem !important;
+}
+
+/* Primary Button (Accept All) */
+.cf-zaraz-button-primary {
+  background-color: var(--zaraz-primary) !important;
+  color: #ffffff !important;
+  border: none !important;
+  border-radius: 8px !important;
+  padding: 12px 24px !important;
+  font-weight: 600 !important;
+  transition: all 0.2s ease-in-out !important;
+  cursor: pointer !important;
+  flex: 1 !important;
+}
+
+.cf-zaraz-button-primary:hover {
+  background-color: #ea700c !important;
+  transform: translateY(-1px) !important;
+}
+
+/* Secondary Button (Preferences / Reject) */
+.cf-zaraz-button-secondary {
+  background-color: transparent !important;
+  color: var(--zaraz-text) !important;
+  border: 1px solid var(--zaraz-border) !important;
+  border-radius: 8px !important;
+  padding: 12px 24px !important;
+  font-weight: 600 !important;
+  transition: all 0.2s ease-in-out !important;
+  cursor: pointer !important;
+  flex: 1 !important;
+}
+
+.cf-zaraz-button-secondary:hover {
+  background-color: #1e293b !important;
+  border-color: #475569 !important;
+}
+
+/* Links (Privacy Policy) */
+#cf-zaraz-consent-modal a {
+  color: var(--zaraz-primary) !important;
+  text-decoration: none !important;
+}
+
+#cf-zaraz-consent-modal a:hover {
+  text-decoration: underline !important;
+}
+
+/* Switches / Toggles in Preferences */
+.cf-zaraz-switch {
+  accent-color: var(--zaraz-primary) !important;
+}

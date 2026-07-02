@@ -1,0 +1,54 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "vcc",
+  "main": "./src/worker/index.ts",
+  "compatibility_date": "2025-10-08",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": {
+    "enabled": true
+  },
+  "routes": [
+    {
+      "pattern": "vcc.cybercoderbd.com",
+      "custom_domain": true
+    },
+    {
+      "pattern": "shop.cybercoderbd.com",
+      "custom_domain": true
+    }
+  ],
+  "upload_source_maps": true,
+  "send_email": [
+    {
+      "name": "EMAIL"
+    }
+  ],
+  "assets": {
+    "directory": "./dist/client",
+    "not_found_handling": "single-page-application"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "vcc",
+      "database_id": "3aaa4d46-918e-4d46-a4ac-2deb940c3506"
+    }
+  ],
+  "kv_namespaces": [
+    {
+      "binding": "sessions",
+      "id": "a928b4a951604a4095909359ebdc9d5c"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "BUCKET",
+      "bucket_name": "agentr2"
+    }
+  ],
+  "vars": {
+    "R2_DOMAIN": "https://agent-files.xxxx.visatk.us",
+    "DOMAIN": "cybercoderbd.com",
+    "COMPANY_NAME": "CYBERCODERBD Inc."
+  }
+}
